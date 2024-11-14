@@ -3,6 +3,7 @@ package com.example.delivery2consumer.services;
 import com.example.delivery2consumer.enums.Status;
 import com.example.delivery2consumer.dto.OrderStatusUpdateMessage;
 import com.example.delivery2consumer.models.Order;
+import com.example.delivery2consumer.models.ResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -48,15 +49,23 @@ public class DiscountService {
         }
     }
 
-    private void applyDiscount(UUID id, double discount) {
+    private ResponseDto applyDiscount(UUID id, double discount) {
         String url = "http://localhost:8081/api/orders/discount/" + id + "/" + discount;
         try {
-            // Perform the PUT request, but do not process the response body.
-            restTemplate.exchange(url, HttpMethod.PUT, HttpEntity.EMPTY, Void.class);
-            System.out.println("Скидка в " + (discount * 100) + "% применена для заказа с ID: " + id);
+            ResponseEntity<ResponseDto> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, HttpEntity.EMPTY, ResponseDto.class);
+            ResponseDto response = responseEntity.getBody();
+            if (response != null) {
+                System.out.println("Скидка в " + (discount * 100) + "% применена для заказа с ID: " + id);
+                System.out.println("Старая цена: " + response.getOldPrice() + ", Новая цена: " + response.getNewPrice());
+                return response;
+            } else {
+                System.out.println("Не удалось получить данные по заказу с ID: " + id);
+            }
         } catch (Exception e) {
             System.out.println("Ошибка при применении скидки для заказа с ID: " + id);
-            e.printStackTrace();  // Log the error for debugging
+            e.printStackTrace();
         }
+        return null;
     }
+
 }
